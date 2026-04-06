@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>時間の再配分 — 日本の200年シナリオ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap');
+
+:root {
+  --bg: #0a0a0b;
+  --bg2: #111113;
+  --bg3: #18181c;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8e6e0;
+  --text2: #8a8880;
+  --text3: #4a4845;
+  --accent: #c8a96e;
+  --accent2: #7b9ea8;
+  --red: #c45c4a;
+  --green: #4a8c6e;
+  --purple: #7a6bb5;
+  --work: #3a6fa8;
+  --sleep: #4a4845;
+  --meal: #3a7a5c;
+  --drift: #a03030;
+  --yt: #8a4020;
+  --xr: #5a4a9a;
+  --social: #7a5a18;
+  --idle: #2a2825;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 300;
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─── */
+.header {
+  padding: 4rem 2rem 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.header-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+
+.header h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 300;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.2rem;
+  color: var(--text);
+}
+
+.header h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.header-sub {
+  font-size: 14px;
+  color: var(--text2);
+  max-width: 560px;
+  line-height: 1.9;
+}
+
+.header-meta {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+}
+
+.meta-item span {
+  display: block;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+
+/* ─── NAV ─── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,10,11,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 0 2rem;
+}
+
+.nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-inner::-webkit-scrollbar { display: none; }
+
+.nav-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  text-decoration: none;
+  padding: 0.9rem 1.2rem;
+  white-space: nowrap;
+  border-bottom: 1.5px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ─── MAIN ─── */
+.main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+/* ─── SECTION ─── */
+.section {
+  padding: 4rem 0 2rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.section:last-child { border-bottom: none; }
+
+.section-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text3);
+  margin-bottom: 0.5rem;
+}
+
+.section-title {
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.section-desc {
+  font-size: 13px;
+  color: var(--text2);
+  max-width: 600px;
+  margin-bottom: 2rem;
+  line-height: 1.9;
+}
+
+/* ─── ERA TABS ─── */
+.era-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.era-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 2px;
+  border: 0.5px solid var(--border2);
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s;
+}
+
+.era-btn:hover { color: var(--text2); border-color: var(--border2); }
+.era-btn.on { background: var(--accent); color: #0a0a0b; border-color: var(--accent); }
+
+/* ─── METRIC CARDS ─── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 0.5px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.metric {
+  background: var(--bg2);
+  padding: 1.25rem 1.5rem;
+}
+
+.metric-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.metric-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+/* ─── TREEMAP ─── */
+.treemap-wrap {
+  margin-bottom: 1rem;
+}
+
+.treemap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.tm-row {
+  display: flex;
+  gap: 2px;
+}
+
+.tm-cell {
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  transition: opacity 0.15s, transform 0.1s;
+  min-width: 0;
+  position: relative;
+}
+
+.tm-cell:hover { opacity: 0.85; transform: scale(1.01); }
+.tm-cell.selected { outline: 1.5px solid rgba(255,255,255,0.5); }
+
+.tm-label {
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.tm-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+/* ─── DETAIL PANEL ─── */
+.detail-panel {
+  background: var(--bg2);
+  border: 0.5px solid var(--border2);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  min-height: 80px;
+  transition: opacity 0.2s;
+}
+
+.detail-title {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  font-weight: 400;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.detail-item {
+  background: var(--bg3);
+  padding: 10px 12px;
+}
+
+.detail-name {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+
+.detail-bar-bg {
+  background: rgba(255,255,255,0.06);
+  height: 3px;
+  margin-bottom: 5px;
+}
+
+.detail-bar { height: 100%; transition: width 0.4s ease; }
+
+.detail-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+/* ─── CHARTS ─── */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* ─── TIMELINE BAR ─── */
+.tl-section { margin-bottom: 2rem; }
+
+.tl-row { margin-bottom: 10px; }
+
+.tl-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.tl-bar-bg {
+  height: 28px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.tl-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+  overflow: hidden;
+  white-space: nowrap;
+  transition: flex 0.5s ease;
+}
+
+/* ─── PHASE BAR ─── */
+.phase-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 1.5rem;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.phase-seg {
+  padding: 8px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.4;
+}
+
+/* ─── INSIGHT BOX ─── */
+.insight {
+  border-left: 1.5px solid var(--accent);
+  padding: 0.75rem 1rem;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.9;
+  margin-top: 1rem;
+  background: rgba(200,169,110,0.04);
+}
+
+/* ─── BI CHART LEGEND ─── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 0.75rem;
+}
+
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+}
+
+.lsq {
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ─── POPUP NOTE ─── */
+.note-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 0.5px solid var(--border);
+  margin-top: 1.5rem;
+}
+
+.note-card {
+  background: var(--bg2);
+  padding: 1.25rem 1.5rem;
+}
+
+.note-head {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+
+.note-body {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.9;
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  border-top: 0.5px solid var(--border);
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 600px) {
+  .note-grid { grid-template-columns: 1fr; }
+  .header { padding: 2.5rem 1.25rem 2rem; }
+  .main { padding: 0 1.25rem 4rem; }
+  .nav { padding: 0 1.25rem; }
+}
+
+/* ─── FADE IN ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.section { animation: fadeUp 0.5s ease both; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <p class="header-eyebrow">Research Scenario / Japan 2026–2226</p>
+  <h1>時間は<em>どこへ</em>行くのか<br>— 200年の再配分シナリオ</h1>
+  <p class="header-sub">日本語圏 1.2億人 × 24時間 = 28.8億時間/日。この「総時間」が、労働の消滅・AIの台頭・ベーシックインカムの浸透によって、どのジャンルへ再配分されていくかを可視化した思考実験です。</p>
+  <div class="header-meta">
+    <div class="meta-item"><span>28.8億h</span>1日の総時間（不変）</div>
+    <div class="meta-item"><span>200年</span>観測期間</div>
+    <div class="meta-item"><span>6</span>フェーズ区分</div>
+    <div class="meta-item"><span>8</span>主要カテゴリ</div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-link active" href="#overview">概要</a>
+    <a class="nav-link" href="#timemap">時間地図</a>
+    <a class="nav-link" href="#timeline">断層の拡大</a>
+    <a class="nav-link" href="#labor">労働×BI</a>
+    <a class="nav-link" href="#sentiment">社会感情</a>
+    <a class="nav-link" href="#content">コンテンツ</a>
+    <a class="nav-link" href="#notes">補注</a>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ─── 01 OVERVIEW ─── -->
+<section class="section" id="overview">
+  <p class="section-num">01 — OVERVIEW</p>
+  <h2 class="section-title">6つのフェーズで読む200年</h2>
+  <p class="section-desc">現在は「労働が時間の最大消費者」だが、AIとBIの進展により構造が段階的に書き換わる。最大の危機は2060〜2080年代の「ギャップ期間」。</p>
+
+  <div class="phase-row">
+    <div class="phase-seg" style="flex:14;background:#1a2e42">過渡期<br>〜2050</div>
+    <div class="phase-seg" style="flex:17;background:#5a1a1a">二極混乱<br>2050–80</div>
+    <div class="phase-seg" style="flex:16;background:#4a3a10">再設計<br>2080–110</div>
+    <div class="phase-seg" style="flex:17;background:#1a3a2a">安定移行<br>2110–150</div>
+    <div class="phase-seg" style="flex:18;background:#2a1a4a">新文明<br>2150–200</div>
+    <div class="phase-seg" style="flex:18;background:#1a1a1a">未知領域<br>2200〜</div>
+  </div>
+
+  <div class="note-grid">
+    <div class="note-card">
+      <p class="note-head" style="color:var(--work)">◼ 過渡期（〜2050）</p>
+      <p class="note-body">AI導入で定型業務が消え始める。週休3日・時短が普及。YouTube視聴が「隙間消費」から「主要活動」へ移行し始める段階。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--drift)">◼ 二極混乱（2050–80）</p>
+      <p class="note-body">最も危険な30年。労働は消えたがBIが追いつかず、漂流層が人口の40%近くに達する。惰性消費と無気力が全体の35%超を占めるピーク。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--social)">◼ 再設計（2080–110）</p>
+      <p class="note-body">BI充足率がようやく最低生活ラインを超え、制度再構築が本格化。「意味」の問い直しが始まり、哲学・芸術・社交への時間投資が戻り始める。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--green)">◼ 安定移行（2110–150）</p>
+      <p class="note-body">XR・創造・学習が社交・哲学と並ぶ最大カテゴリへ。「YouTubeを見る」という行為は、現代人が「テレビを見る」と言うのと同じ感覚になる。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 02 TREEMAP ─── -->
+<section class="section" id="timemap">
+  <p class="section-num">02 — TIME MAP</p>
+  <h2 class="section-title">時間の地図 — 28.8億h/日の配分</h2>
+  <p class="section-desc">面積が時間の大きさを表す。タブで時代を切り替え、ブロックをタップすると細分化内訳が表示される。</p>
+
+  <div class="era-tabs" id="tm-tabs"></div>
+
+  <div id="era-metrics" class="metrics" style="margin-bottom:1rem;"></div>
+
+  <div class="treemap-wrap">
+    <div class="treemap" id="treemap-grid"></div>
+  </div>
+
+  <div class="detail-panel" id="detail-panel">
+    <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);">▲ ブロックをタップして細分化内訳を確認</p>
+  </div>
+
+  <div class="insight" id="tm-insight"></div>
+</section>
+
+<!-- ─── 03 TIMELINE ─── -->
+<section class="section" id="timeline">
+  <p class="section-num">03 — POLARIZATION</p>
+  <h2 class="section-title">断層の拡大 — 中間層が消える過程</h2>
+  <p class="section-desc">積み上げバーで「労働が縮み、漂流が膨らみ、XRが台頭する」流れを一覧できる。</p>
+
+  <div class="legend" style="margin-bottom:1rem;">
+    <span><span class="lsq" style="background:#3a6fa8"></span>労働・通勤</span>
+    <span><span class="lsq" style="background:#4a4845"></span>睡眠</span>
+    <span><span class="lsq" style="background:#3a7a5c"></span>食事・家事</span>
+    <span><span class="lsq" style="background:#a03030"></span>惰性消費</span>
+    <span><span class="lsq" style="background:#8a4020"></span>YT充実層</span>
+    <span><span class="lsq" style="background:#5a4a9a"></span>XR・創造</span>
+    <span><span class="lsq" style="background:#7a5a18"></span>社交・哲学</span>
+    <span><span class="lsq" style="background:#2a2825"></span>無気力</span>
+  </div>
+
+  <div class="tl-section" id="tl-bars"></div>
+
+  <div class="chart-wrap" style="height:280px;margin-top:1rem;">
+    <canvas id="stackedLine"></canvas>
+  </div>
+</section>
+
+<!-- ─── 04 LABOR ─── -->
+<section class="section" id="labor">
+  <p class="section-num">04 — LABOR × BI</p>
+  <h2 class="section-title">労働時間の消滅とBIの遅延</h2>
+  <p class="section-desc">労働が消えるスピードとBI充足率が追いつくスピードには大きなギャップがある。このギャップ期間が社会的混乱の主因。</p>
+
+  <div class="legend">
+    <span><span class="lsq" style="background:#3a6fa8"></span>労働時間（h/日・人口平均）</span>
+    <span><span class="lsq" style="background:#4a8c6e"></span>BI充足率・楽観（%）</span>
+    <span><span class="lsq" style="background:#c45c4a"></span>BI充足率・現実（%）</span>
+    <span><span class="lsq" style="background:#3a3835"></span>最低生活ライン</span>
+  </div>
+  <div class="chart-wrap" style="height:240px;margin-top:0.5rem;">
+    <canvas id="laborChart"></canvas>
+  </div>
+
+  <div class="insight">現実シナリオでは2085年前後にBI充足率がようやく最低生活ラインを超える。それまでの約60年間が「自由なのに貧しい」という最も不安定な時代。楽観シナリオとの差は最大で約40ポイントに達する（2060年代）。</div>
+</section>
+
+<!-- ─── 05 SENTIMENT ─── -->
+<section class="section" id="sentiment">
+  <p class="section-num">05 — SOCIAL SENTIMENT</p>
+  <h2 class="section-title">逆説 — 肯定感と不安感が同時に上昇する</h2>
+  <p class="section-desc">「働かなくていい」という肯定感が高まるほど、「自分は大丈夫か」という不安も同時に上昇する。2060〜2070年代が最大の緊張点。</p>
+
+  <div class="legend">
+    <span><span class="lsq" style="background:#4a8c6e"></span>不就労への肯定感</span>
+    <span><span class="lsq" style="background:#c45c4a"></span>将来への不安感</span>
+    <span><span class="lsq" style="background:#3a6fa8"></span>社会への信頼感</span>
+    <span><span class="lsq" style="background:#7a6bb5"></span>「意味」の再定義完了度</span>
+  </div>
+  <div class="chart-wrap" style="height:240px;margin-top:0.5rem;">
+    <canvas id="sentChart"></canvas>
+  </div>
+
+  <div class="insight">2090〜2110年頃に「不安感が下がり信頼感が回復」する交差点が訪れる。この交差点を過ぎると安定フェーズへ移行するが、BI設計が失敗した場合は不安感が高止まりしたまま2100年代へ突入する可能性がある。</div>
+</section>
+
+<!-- ─── 06 CONTENT ─── -->
+<section class="section" id="content">
+  <p class="section-num">06 — CONTENT</p>
+  <h2 class="section-title">コンテンツ消費の200年 — 量と質の分岐</h2>
+  <p class="section-desc">総量は2070年代にピークを迎えたのち、XR没入体験が「視聴」に取って代わる。YouTubeという言葉は2150年以降に「古典メディア」となる。</p>
+
+  <div class="legend">
+    <span><span class="lsq" style="background:#a03030"></span>漂流層の惰性視聴</span>
+    <span><span class="lsq" style="background:#4a8c6e"></span>充実層の選択的視聴</span>
+    <span><span class="lsq" style="background:#5a4a9a"></span>XR・没入体験</span>
+    <span><span class="lsq" style="background:#4a4845"></span>合計（点線）</span>
+  </div>
+  <div class="chart-wrap" style="height:240px;margin-top:0.5rem;">
+    <canvas id="contentChart"></canvas>
+  </div>
+
+  <div class="insight">最大の皮肉：視聴時間の「量」は楽観・現実どちらのシナリオでも2070年代に約12.6億h/日でほぼ同じ数字になる。しかし漂流層にとってのYouTubeは充実ではなく孤独の埋め草。量が同じでも「体験の質」は天と地ほど異なる。</div>
+</section>
+
+<!-- ─── 07 NOTES ─── -->
+<section class="section" id="notes">
+  <p class="section-num">07 — NOTES</p>
+  <h2 class="section-title">前提・注釈・現実的な留保</h2>
+  <p class="section-desc">このダッシュボードは思考実験であり、予測ではない。以下の留保を踏まえて読んでほしい。</p>
+
+  <div class="note-grid">
+    <div class="note-card">
+      <p class="note-head" style="color:var(--accent)">データの根拠</p>
+      <p class="note-body">2026年の実績値は内閣府・厚労省・YouTube公式統計・Nielsenデータに基づく。2030年以降は推計・外挿値。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--accent)">BIの不確実性</p>
+      <p class="note-body">完全なBI実装に成功した国は現時点で存在しない。財源・政治的合意・インフレリスクは技術進歩とは独立した変数。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--accent)">「労働90%代替」の過大評価リスク</p>
+      <p class="note-body">産業革命でも「機械が仕事を奪う」と言われたが、仕事の種類が変わった。AIによる「新しい労働」の創出は本シナリオでは過小評価されている可能性がある。</p>
+    </div>
+    <div class="note-card">
+      <p class="note-head" style="color:var(--accent)">2200年以降は予測不能</p>
+      <p class="note-body">意識のアップロード・寿命の大幅延長・身体からの分離が起きた場合、「1日24時間」という前提自体が崩れる。グラフの2200年以降は参考値に過ぎない。</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p class="footer-note">思考実験 / 2026年4月作成<br>数値は推計・外挿値を含む。予測ではなくシナリオです。</p>
+  <p class="footer-note" style="text-align:right;">日本語圏 1.2億人 × 24h = 28.8億h/日<br>総時間は不変 — 中身だけが変わる</p>
+</footer>
+
+<script>
+/* ───── DATA ───── */
+const ERAS = [
+  {label:'2026年', key:'e1'},
+  {label:'2050年', key:'e2'},
+  {label:'2080年', key:'e3'},
+  {label:'2110年', key:'e4'},
+  {label:'2150年', key:'e5'},
+  {label:'2226年', key:'e6'},
+];
+
+const INSIGHTS = [
+  '労働・通勤が全体の33.7%（9.7億h）を占める最大カテゴリ。コンテンツ消費はまだ「隙間産業」。現在の長期ニート・無職層（0.16%）が、2053年以降の「漂流層」の原型を作っている。',
+  '労働が3.2億hへ急縮小し、惰性消費が4.2億hまで膨張。XR体験が本格普及し始め「どう時間を使うか」の格差が初めて可視化される世代。BI不足×失業爆発の前夜。',
+  '惰性消費が5.8億h（全体の20%超）でピーク。BI不足×失業爆発の混乱期のど真ん中。XR・創造が台頭する一方、無気力・停滞も高水準。充実層と漂流層の二極が最も鮮明な時代。',
+  'BI充足率が最低ラインを超え、無気力・停滞がほぼ消滅。惰性消費が縮小に転じ、社交・哲学・芸術が急拡大する「意味の再発見」フェーズ。XR・創造が最大カテゴリへ近づく。',
+  'XR・創造・学習（8.0億h）が最大カテゴリへ。YouTubeという概念は「古典コンテンツ」扱い。没入体験と社交の境界が曖昧になり「視聴」と「参加」が融合する時代。',
+  '労働はほぼ消滅（0.05億h）。人間の時間の約34%がXR・創造・学習に。「惰性消費」という概念自体が辞書から消えている可能性がある。睡眠・食事以外のほぼ全てが選択的な活動に。',
+];
+
+const CATS = [
+  { id:'work', label:'労働・通勤', color:'#3a6fa8', tc:'#c8dff5',
+    subs:[{name:'知識・専門職',c:'#1e4a78'},{name:'ケア・対人',c:'#3a6fa8'},{name:'通勤・移動',c:'#6a9fc8'},{name:'管理・調整',c:'#9abce0'}],
+    vals:{e1:9.7,e2:3.2,e3:1.2,e4:0.4,e5:0.15,e6:0.05},
+    sr:{e1:[0.40,0.28,0.22,0.10],e2:[0.55,0.28,0.10,0.07],e3:[0.65,0.25,0.06,0.04],e4:[0.72,0.20,0.05,0.03],e5:[0.78,0.18,0.03,0.01],e6:[0.80,0.15,0.03,0.02]}},
+  { id:'sleep', label:'睡眠', color:'#3a3835', tc:'#9a9890',
+    subs:[{name:'睡眠（本体）',c:'#2a2825'},{name:'仮眠・昼寝',c:'#4a4845'},{name:'入眠準備',c:'#6a6860'}],
+    vals:{e1:8.4,e2:8.4,e3:8.4,e4:8.4,e5:8.2,e6:7.8},
+    sr:{e1:[0.82,0.10,0.08],e2:[0.80,0.12,0.08],e3:[0.78,0.14,0.08],e4:[0.76,0.15,0.09],e5:[0.74,0.16,0.10],e6:[0.72,0.18,0.10]}},
+  { id:'meal', label:'食事・家事', color:'#2a5a3c', tc:'#8ad4aa',
+    subs:[{name:'料理・食事',c:'#1a3a28'},{name:'掃除・洗濯',c:'#2a5a3c'},{name:'育児・介護',c:'#4a8a5c'},{name:'買い物',c:'#7aba8c'}],
+    vals:{e1:3.6,e2:3.3,e3:3.1,e4:3.0,e5:2.8,e6:2.5},
+    sr:{e1:[0.42,0.25,0.20,0.13],e2:[0.40,0.23,0.22,0.15],e3:[0.38,0.22,0.24,0.16],e4:[0.36,0.20,0.26,0.18],e5:[0.34,0.18,0.28,0.20],e6:[0.32,0.15,0.30,0.23]}},
+  { id:'drift', label:'惰性消費（漂流）', color:'#8a2020', tc:'#f0a0a0',
+    subs:[{name:'YouTube自動再生',c:'#c04040'},{name:'SNSスクロール',c:'#903030'},{name:'短尺垂れ流し',c:'#702020'},{name:'目的なしゲーム',c:'#501010'}],
+    vals:{e1:0.6,e2:4.2,e3:5.8,e4:2.5,e5:1.2,e6:0.3},
+    sr:{e1:[0.40,0.30,0.20,0.10],e2:[0.32,0.28,0.22,0.18],e3:[0.28,0.26,0.24,0.22],e4:[0.25,0.28,0.25,0.22],e5:[0.22,0.30,0.26,0.22],e6:[0.20,0.30,0.28,0.22]}},
+  { id:'yt', label:'YouTube充実層', color:'#7a3818', tc:'#f0b888',
+    subs:[{name:'教育・学習動画',c:'#c06030'},{name:'ドキュメンタリー',c:'#905020'},{name:'音楽・ライブ',c:'#a07030'},{name:'ニュース解説',c:'#806040'},{name:'趣味・専門',c:'#604030'}],
+    vals:{e1:0.9,e2:2.4,e3:3.0,e4:2.5,e5:1.8,e6:1.0},
+    sr:{e1:[0.30,0.15,0.25,0.18,0.12],e2:[0.28,0.16,0.22,0.16,0.18],e3:[0.26,0.18,0.20,0.14,0.22],e4:[0.24,0.20,0.18,0.12,0.26],e5:[0.22,0.22,0.16,0.10,0.30],e6:[0.20,0.24,0.14,0.08,0.34]}},
+  { id:'xr', label:'XR・創造・学習', color:'#3a2a7a', tc:'#c0b0f0',
+    subs:[{name:'VR/AR没入体験',c:'#6050a0'},{name:'AI協働・創作',c:'#4030808'},{name:'スキル学習',c:'#8070c0'},{name:'目的ありゲーム',c:'#a090e0'},{name:'音楽・美術制作',c:'#201060'}],
+    vals:{e1:0.2,e2:2.5,e3:3.8,e4:6.2,e5:8.0,e6:9.8},
+    sr:{e1:[0.30,0.20,0.30,0.15,0.05],e2:[0.32,0.24,0.24,0.14,0.06],e3:[0.34,0.26,0.20,0.14,0.06],e4:[0.36,0.28,0.18,0.12,0.06],e5:[0.38,0.30,0.16,0.10,0.06],e6:[0.40,0.32,0.14,0.08,0.06]}},
+  { id:'social', label:'社交・芸術・哲学', color:'#5a3a08', tc:'#e0b870',
+    subs:[{name:'対面・コミュニティ',c:'#8a6018'},{name:'読書・思索',c:'#c09030'},{name:'旅行・体験',c:'#a07020'},{name:'スポーツ',c:'#604010'},{name:'宗教・瞑想',c:'#402800'}],
+    vals:{e1:5.1,e2:3.8,e3:3.2,e4:5.5,e5:7.0,e6:7.8},
+    sr:{e1:[0.38,0.20,0.18,0.16,0.08],e2:[0.34,0.22,0.18,0.16,0.10],e3:[0.30,0.24,0.18,0.16,0.12],e4:[0.28,0.26,0.18,0.16,0.12],e5:[0.26,0.28,0.18,0.15,0.13],e6:[0.24,0.30,0.18,0.14,0.14]}},
+  { id:'idle', label:'無気力・停滞', color:'#1a1815', tc:'#706860',
+    subs:[{name:'抑うつ・引きこもり',c:'#302820'},{name:'目的なし徘徊',c:'#202018'},{name:'過眠・寝込み',c:'#403830'}],
+    vals:{e1:0.3,e2:0.8,e3:0.8,e4:0.2,e5:0.05,e6:0.02},
+    sr:{e1:[0.50,0.28,0.22],e2:[0.48,0.30,0.22],e3:[0.46,0.30,0.24],e4:[0.44,0.30,0.26],e5:[0.42,0.30,0.28],e6:[0.40,0.30,0.30]}},
+];
+
+const TOTAL = 28.8;
+let currentEra = 'e1';
+
+/* ───── ERA TABS ───── */
+function buildTabs() {
+  const el = document.getElementById('tm-tabs');
+  ERAS.forEach((e, i) => {
+    const b = document.createElement('button');
+    b.className = 'era-btn' + (i === 0 ? ' on' : '');
+    b.textContent = e.label;
+    b.onclick = () => {
+      currentEra = e.key;
+      document.querySelectorAll('.era-btn').forEach((x, j) => x.classList.toggle('on', j === i));
+      renderTreemap();
+      renderMetrics();
+      updateInsight();
+    };
+    el.appendChild(b);
+  });
+}
+
+/* ───── METRICS ───── */
+function renderMetrics() {
+  const work = CATS[0].vals[currentEra];
+  const drift = CATS[3].vals[currentEra];
+  const xr = CATS[5].vals[currentEra];
+  const idle = CATS[7] ? CATS[7].vals[currentEra] : CATS[7]?.vals[currentEra] || 0;
+  const ytTotal = CATS[3].vals[currentEra] + CATS[4].vals[currentEra];
+  const idleV = CATS[7] ? CATS[7].vals[currentEra] : 0;
+
+  document.getElementById('era-metrics').innerHTML = [
+    {l:'労働・通勤', v: work.toFixed(1)+'億h', s: (work/TOTAL*100).toFixed(1)+'%'},
+    {l:'YouTube合計', v: ytTotal.toFixed(1)+'億h', s: (ytTotal/TOTAL*100).toFixed(1)+'%'},
+    {l:'XR・創造・学習', v: xr.toFixed(1)+'億h', s: (xr/TOTAL*100).toFixed(1)+'%'},
+    {l:'無気力・停滞', v: idleV.toFixed(2)+'億h', s: (idleV/TOTAL*100).toFixed(1)+'%'},
+  ].map(m => `<div class="metric"><p class="metric-label">${m.l}</p><p class="metric-value">${m.v}</p><p class="metric-sub">${m.s}</p></div>`).join('');
+}
+
+/* ───── TREEMAP ───── */
+function renderTreemap() {
+  const tm = document.getElementById('treemap-grid');
+  tm.innerHTML = '';
+  const sorted = [...CATS].sort((a, b) => b.vals[currentEra] - a.vals[currentEra]);
+  const total = sorted.reduce((s, c) => s + c.vals[currentEra], 0);
+  const ROW_H = 80;
+  let i = 0;
+  while (i < sorted.length) {
+    const row = document.createElement('div');
+    row.className = 'tm-row';
+    row.style.height = ROW_H + 'px';
+    let rowSum = 0, items = [];
+    while (i < sorted.length && items.length < 4) {
+      items.push(sorted[i++]);
+      rowSum = items.reduce((s, c) => s + c.vals[currentEra], 0);
+      if (rowSum / total > 0.28 && items.length >= 2) break;
+    }
+    items.forEach(cat => {
+      const v = cat.vals[currentEra];
+      const w = (v / rowSum * 100).toFixed(2);
+      const cell = document.createElement('div');
+      cell.className = 'tm-cell';
+      cell.style.cssText = `flex:0 0 ${w}%;background:${cat.color};`;
+      cell.innerHTML = `<span class="tm-label" style="color:${cat.tc}">${cat.label}</span><span class="tm-val" style="color:${cat.tc}">${v.toFixed(1)}億h · ${(v/TOTAL*100).toFixed(1)}%</span>`;
+      cell.onclick = () => showDetail(cat, cell);
+      row.appendChild(cell);
+    });
+    tm.appendChild(row);
+  }
+}
+
+function showDetail(cat, cell) {
+  document.querySelectorAll('.tm-cell').forEach(c => c.classList.remove('selected'));
+  cell.classList.add('selected');
+  const v = cat.vals[currentEra];
+  const ratios = cat.sr[currentEra];
+  document.getElementById('detail-panel').innerHTML =
+    `<p class="detail-title">${cat.label} — ${v.toFixed(1)}億h/日の内訳</p>
+    <div class="detail-grid">${cat.subs.map((s, i) => {
+      const sv = (v * ratios[i]).toFixed(2);
+      const sp = Math.round(ratios[i] * 100);
+      return `<div class="detail-item">
+        <p class="detail-name">${s.name}</p>
+        <div class="detail-bar-bg"><div class="detail-bar" style="width:${sp}%;background:${s.c}"></div></div>
+        <p class="detail-val">${sv}億h（${sp}%）</p>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function updateInsight() {
+  const i = ERAS.findIndex(e => e.key === currentEra);
+  document.getElementById('tm-insight').textContent = INSIGHTS[i];
+}
+
+/* ───── TIMELINE BARS ───── */
+function buildTLBars() {
+  const el = document.getElementById('tl-bars');
+  const colors = ['#3a6fa8','#3a3835','#2a5a3c','#8a2020','#7a3818','#3a2a7a','#5a3a08','#1a1815'];
+  el.innerHTML = ERAS.map(era => {
+    const vals = CATS.map(c => c.vals[era.key]);
+    const rowTotal = vals.reduce((s,v)=>s+v,0);
+    const segs = vals.map((v,i) => {
+      const w = (v/rowTotal*100).toFixed(1);
+      const label = v >= 1.5 ? v.toFixed(0)+'億' : '';
+      return `<div class="tl-seg" style="flex:${w};background:${colors[i]}" title="${CATS[i].label}: ${v.toFixed(1)}億h">${label}</div>`;
+    }).join('');
+    const ytTotal = (CATS[3].vals[era.key] + CATS[4].vals[era.key]).toFixed(1);
+    return `<div class="tl-row">
+      <div class="tl-head"><span>${era.label}</span><span>YouTube系 ${ytTotal}億h · XR ${CATS[5].vals[era.key].toFixed(1)}億h</span></div>
+      <div class="tl-bar-bg">${segs}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ───── CHARTS ───── */
+const YRS = ['2026','2033','2040','2050','2060','2070','2080','2090','2100','2110','2125','2150','2175','2200','2226'];
+const gridC = 'rgba(255,255,255,0.06)';
+const tickC = '#4a4845';
+
+function buildStackedLine() {
+  const ctx = document.getElementById('stackedLine').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: YRS,
+      datasets: [
+        {label:'労働・通勤', data:[9.7,7.1,5.2,3.2,2.0,1.2,0.6,0.4,0.3,0.2,0.1,0.1,0.05,0.05,0.05], borderColor:'#3a6fa8', fill:false, tension:0.4, borderWidth:2, pointRadius:2, pointBackgroundColor:'#3a6fa8'},
+        {label:'惰性消費', data:[0.6,1.4,2.5,4.2,5.5,5.8,5.0,4.0,3.2,2.5,1.8,1.2,0.8,0.5,0.3], borderColor:'#a03030', fill:false, tension:0.4, borderWidth:2, pointRadius:2, pointBackgroundColor:'#a03030'},
+        {label:'XR・創造', data:[0.2,0.8,1.5,2.5,3.2,3.8,4.5,5.2,5.8,6.2,6.8,7.5,8.2,8.8,9.8], borderColor:'#5a4a9a', fill:false, tension:0.4, borderWidth:2, pointRadius:2, pointBackgroundColor:'#5a4a9a'},
+        {label:'社交・哲学', data:[5.1,4.7,4.3,3.8,3.4,3.2,3.5,4.0,4.8,5.5,6.2,6.8,7.2,7.5,7.8], borderColor:'#8a6020', fill:false, tension:0.4, borderWidth:1.5, pointRadius:2, pointBackgroundColor:'#8a6020'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Number(c.raw).toFixed(1)}億h`}} },
+      scales: {
+        x: { ticks:{color:tickC,font:{size:10},maxRotation:45,autoSkip:false}, grid:{color:gridC} },
+        y: { min:0, max:12, title:{display:true,text:'億h/日',color:tickC,font:{size:10}}, ticks:{color:tickC,callback:v=>v+'億',stepSize:2}, grid:{color:gridC} }
+      }
+    }
+  });
+}
+
+function buildLaborChart() {
+  const ctx = document.getElementById('laborChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: YRS,
+      datasets: [
+        {label:'労働時間', data:[4.5,3.5,2.5,1.5,0.9,0.6,0.3,0.2,0.15,0.1,0.07,0.05,0.03,0.02,0.01],
+         borderColor:'#3a6fa8', fill:false, tension:0.4, borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#3a6fa8', yAxisID:'yL'},
+        {label:'BI楽観', data:[0,15,35,70,90,100,105,108,110,110,110,110,110,110,110],
+         borderColor:'#4a8c6e', fill:false, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#4a8c6e', yAxisID:'yR'},
+        {label:'BI現実', data:[0,6,18,38,55,72,88,98,105,108,110,110,110,110,110],
+         borderColor:'#c45c4a', fill:false, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#c45c4a', yAxisID:'yR'},
+        {label:'最低生活ライン', data:[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],
+         borderColor:'#3a3835', borderDash:[4,3], fill:false, borderWidth:1, pointRadius:0, yAxisID:'yR'},
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='yL'?` ${c.dataset.label}: ${c.raw}h`:` ${c.dataset.label}: ${c.raw}%`}}},
+      scales:{
+        x:{ticks:{color:tickC,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:gridC}},
+        yL:{position:'left',min:0,max:10,title:{display:true,text:'労働h/日',color:tickC,font:{size:10}},ticks:{color:tickC,stepSize:2},grid:{color:gridC}},
+        yR:{position:'right',min:0,max:120,title:{display:true,text:'BI充足率%',color:tickC,font:{size:10}},ticks:{color:tickC,callback:v=>v+'%',stepSize:20},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function buildSentChart() {
+  const ctx = document.getElementById('sentChart').getContext('2d');
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:YRS,
+      datasets:[
+        {label:'不就労への肯定感', data:[18,30,50,68,75,80,84,86,88,90,92,94,96,97,98], borderColor:'#4a8c6e', fill:false, tension:0.4, borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#4a8c6e'},
+        {label:'将来への不安感',   data:[45,62,72,78,80,75,65,52,40,32,26,20,16,13,10], borderColor:'#c45c4a', fill:false, tension:0.4, borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#c45c4a'},
+        {label:'社会への信頼感',   data:[40,32,26,22,20,24,30,38,48,58,66,74,80,84,88], borderColor:'#3a6fa8', fill:false, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#3a6fa8'},
+        {label:'意味の再定義',     data:[2,4,8,14,22,32,45,58,68,76,84,90,94,96,98],   borderColor:'#7a6bb5', borderDash:[3,3], fill:false, tension:0.4, borderWidth:1.5, pointRadius:2, pointBackgroundColor:'#7a6bb5'},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}%`}}},
+      scales:{
+        x:{ticks:{color:tickC,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:gridC}},
+        y:{min:0,max:100,title:{display:true,text:'指数 %',color:tickC,font:{size:10}},ticks:{color:tickC,stepSize:20,callback:v=>v+'%'},grid:{color:gridC}}
+      }
+    }
+  });
+}
+
+function buildContentChart() {
+  const ctx = document.getElementById('contentChart').getContext('2d');
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:YRS,
+      datasets:[
+        {label:'漂流層の惰性視聴', data:[0.6,1.4,2.5,4.2,5.5,5.8,5.0,4.0,3.2,2.5,1.8,1.2,0.8,0.5,0.3], borderColor:'#a03030', backgroundColor:'rgba(160,48,48,0.08)', fill:true, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#a03030'},
+        {label:'充実層の選択的視聴', data:[0.9,1.4,1.9,2.4,2.8,3.0,3.1,3.0,2.8,2.5,2.2,1.8,1.5,1.2,1.0], borderColor:'#4a8c6e', backgroundColor:'rgba(74,140,110,0.06)', fill:true, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#4a8c6e'},
+        {label:'XR・没入体験', data:[0.2,0.8,1.5,2.5,3.2,3.8,4.5,5.2,5.8,6.2,6.8,7.5,8.2,8.8,9.2], borderColor:'#5a4a9a', backgroundColor:'rgba(90,74,154,0.06)', fill:true, tension:0.4, borderWidth:2, pointRadius:3, pointBackgroundColor:'#5a4a9a'},
+        {label:'合計', data:[1.7,3.6,5.9,9.1,11.5,12.6,12.6,12.2,11.8,11.2,10.8,10.5,10.5,10.5,10.5], borderColor:'#4a4845', borderDash:[4,3], fill:false, tension:0.4, borderWidth:1.5, pointRadius:2, pointBackgroundColor:'#4a4845'},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Number(c.raw).toFixed(1)}億h`}}},
+      scales:{
+        x:{ticks:{color:tickC,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:gridC}},
+        y:{min:0,max:15,title:{display:true,text:'億h/日',color:tickC,font:{size:10}},ticks:{color:tickC,stepSize:3,callback:v=>v+'億'},grid:{color:gridC}}
+      }
+    }
+  });
+}
+
+/* ───── NAV HIGHLIGHT ───── */
+function initNavHighlight() {
+  const links = document.querySelectorAll('.nav-link');
+  const sections = document.querySelectorAll('.section');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => obs.observe(s));
+}
+
+/* ───── INIT ───── */
+buildTabs();
+renderTreemap();
+renderMetrics();
+updateInsight();
+buildTLBars();
+buildStackedLine();
+buildLaborChart();
+buildSentChart();
+buildContentChart();
+initNavHighlight();
+</script>
+</body>
+</html>
