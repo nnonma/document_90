@@ -1,0 +1,588 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Shippori+Mincho:wght@400;500;600&display=swap');
+
+  :root {
+    --ink: #1a1a18;
+    --ink2: #4a4a46;
+    --ink3: #8a8a84;
+    --paper: #f5f2eb;
+    --flow-time: #3b7ecf;
+    --flow-money: #c47b2b;
+    --accent: #c47b2b;
+    --line: rgba(26,26,24,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .root {
+    font-family: 'DM Mono', monospace;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Mode tabs */
+  .mode-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    border: none;
+    background: transparent;
+    color: var(--ink3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    text-transform: uppercase;
+  }
+  .mode-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── PATTERN A: 画面遷移 ── */
+  .pattern-a { display: none; padding: 0; }
+  .pattern-a.visible { display: block; }
+
+  .layer-screen {
+    display: none;
+    padding: 20px 16px;
+    animation: fadeIn .25s ease;
+  }
+  .layer-screen.visible { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .breadcrumb {
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--ink3);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb span { cursor: pointer; }
+  .breadcrumb span:hover { color: var(--ink); }
+  .breadcrumb .sep { color: var(--line); }
+  .breadcrumb .current { color: var(--ink); }
+
+  .layer-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .layer-meta {
+    font-size: 10px;
+    color: var(--ink3);
+    letter-spacing: .06em;
+    margin-bottom: 24px;
+  }
+
+  /* Sankey-ish flow bars */
+  .flow-section { margin-bottom: 28px; }
+  .flow-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    letter-spacing: .06em;
+    color: var(--ink3);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .node-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .node-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.4);
+    transition: all .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .node-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .node-item:hover { background: rgba(255,255,255,0.8); border-color: rgba(26,26,24,0.25); }
+  .node-item:hover::before { opacity: 1; }
+
+  .node-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+  }
+  .node-bars { display: flex; flex-direction: column; gap: 3px; width: 120px; flex-shrink: 0; }
+  .bar-row { display: flex; align-items: center; gap: 5px; }
+  .bar-track { flex: 1; height: 4px; background: rgba(26,26,24,0.08); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
+  .bar-fill.time { background: var(--flow-time); }
+  .bar-fill.money { background: var(--flow-money); }
+  .bar-val { font-size: 9px; color: var(--ink3); width: 28px; text-align: right; flex-shrink: 0; }
+
+  .node-arrow {
+    font-size: 12px;
+    color: var(--ink3);
+    opacity: 0;
+    transition: opacity .15s;
+    flex-shrink: 0;
+  }
+  .node-item:hover .node-arrow { opacity: 1; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 14px;
+    font-size: 10px;
+    color: var(--ink3);
+    letter-spacing: .05em;
+    margin-bottom: 16px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 8px; height: 4px; border-radius: 2px; }
+
+  /* ── PATTERN B: 同一画面展開 ── */
+  .pattern-b { display: none; padding: 20px 16px; }
+  .pattern-b.visible { display: block; }
+
+  .river-container {
+    position: relative;
+  }
+
+  .macro-nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+
+  .macro-node {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .macro-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.4);
+    transition: all .2s;
+  }
+  .macro-node.open .macro-header {
+    background: rgba(255,255,255,0.85);
+    border-color: rgba(26,26,24,0.25);
+    border-radius: 4px 4px 0 0;
+    border-bottom-color: transparent;
+  }
+  .macro-header:hover { background: rgba(255,255,255,0.7); }
+
+  .macro-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .macro-toggle {
+    font-size: 11px;
+    color: var(--ink3);
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .macro-node.open .macro-toggle { transform: rotate(90deg); }
+
+  .macro-expand {
+    display: none;
+    border: 1px solid rgba(26,26,24,0.18);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: rgba(255,255,255,0.6);
+    padding: 8px;
+    animation: expandIn .2s ease;
+    margin-bottom: 4px;
+  }
+  @keyframes expandIn { from { opacity: 0; } to { opacity: 1; } }
+  .macro-node.open .macro-expand { display: block; }
+
+  .middle-nodes { display: flex; flex-direction: column; gap: 3px; }
+  .middle-node {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(26,26,24,0.07);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .middle-node:hover { background: rgba(255,255,255,0.9); border-color: rgba(26,26,24,0.2); }
+  .middle-node-name { font-size: 12px; font-family: 'Shippori Mincho', serif; flex: 1; }
+  .middle-node-bars { display: flex; flex-direction: column; gap: 2px; width: 80px; flex-shrink: 0; }
+
+  /* connector line B→mid */
+  .connector-line {
+    position: absolute;
+    left: 20px;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(196,123,43,0.3), transparent);
+    pointer-events: none;
+  }
+
+  /* total strip */
+  .total-strip {
+    display: flex;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(26,26,24,0.04);
+    border-radius: 3px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    color: var(--ink3);
+  }
+  .total-item { display: flex; align-items: center; gap: 5px; }
+  .total-val { font-size: 12px; color: var(--ink); font-weight: 500; }
+
+  .hint {
+    font-size: 10px;
+    color: var(--ink3);
+    letter-spacing: .05em;
+    margin-bottom: 18px;
+    opacity: .7;
+  }
+</style>
+
+<div class="root">
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('a')">A｜画面遷移</button>
+    <button class="mode-tab" onclick="setMode('b')">B｜その場で展開</button>
+  </div>
+
+  <!-- ====== PATTERN A ====== -->
+  <div class="pattern-a visible" id="pa">
+
+    <!-- Macro screen -->
+    <div class="layer-screen visible" id="screen-macro">
+      <div class="breadcrumb"><span class="current">MACRO</span></div>
+      <div class="layer-title">地球・言語圏</div>
+      <div class="layer-meta">総時間 1,900億h/日　　世界GDP 約10京円/年</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-time)"></div>時間</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-money)"></div>お金</div>
+      </div>
+      <div class="node-list" id="macro-list"></div>
+    </div>
+
+    <!-- Middle screen -->
+    <div class="layer-screen" id="screen-middle">
+      <div class="breadcrumb">
+        <span onclick="goBack('macro')">MACRO</span>
+        <span class="sep">›</span>
+        <span class="current" id="mid-breadcrumb">—</span>
+      </div>
+      <div class="layer-title" id="mid-title">—</div>
+      <div class="layer-meta" id="mid-meta">—</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-time)"></div>時間</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-money)"></div>お金</div>
+      </div>
+      <div class="node-list" id="middle-list"></div>
+    </div>
+
+    <!-- Micro screen -->
+    <div class="layer-screen" id="screen-micro">
+      <div class="breadcrumb">
+        <span onclick="goBack('macro')">MACRO</span>
+        <span class="sep">›</span>
+        <span onclick="goBack('middle')" id="micro-bc-mid">—</span>
+        <span class="sep">›</span>
+        <span class="current" id="micro-bc-cur">—</span>
+      </div>
+      <div class="layer-title" id="micro-title">—</div>
+      <div class="layer-meta" id="micro-meta">—</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-time)"></div>時間シェア</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow-money)"></div>お金シェア</div>
+      </div>
+      <div class="node-list" id="micro-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ====== PATTERN B ====== -->
+  <div class="pattern-b" id="pb">
+    <div class="breadcrumb"><span class="current">MACRO → MIDDLE（その場展開）</span></div>
+    <div class="layer-title" style="font-family:'Shippori Mincho',serif;font-size:20px;margin-bottom:4px;">地球・言語圏</div>
+    <div class="layer-meta" style="margin-bottom:12px;">クリックで業界層を展開</div>
+    <div class="hint">▶ をクリックすると支流が開きます</div>
+    <div class="macro-nodes" id="macro-b-list"></div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const macroNodes = [
+  { id:'en', name:'英語圏', pop:'約20億人', time:25, money:55,
+    middle:[
+      { id:'en-tech', name:'テック・AI', time:30, money:35, micro:[
+        {name:'クラウドサービス', time:28, money:40},{name:'SNSプラットフォーム', time:35, money:25},{name:'AI/SaaSツール', time:20, money:22},{name:'ゲーム', time:17, money:13}
+      ]},
+      { id:'en-fin', name:'金融・保険', time:12, money:28, micro:[
+        {name:'投資・証券', time:20, money:45},{name:'保険', time:15, money:30},{name:'FinTech', time:35, money:20},{name:'不動産', time:30, money:5}
+      ]},
+      { id:'en-med', name:'メディア・エンタメ', time:28, money:15, micro:[
+        {name:'動画配信', time:40, money:35},{name:'音楽', time:22, money:18},{name:'ニュース', time:20, money:12},{name:'ポッドキャスト', time:18, money:5}
+      ]},
+      { id:'en-edu', name:'教育・研究', time:15, money:10, micro:[
+        {name:'大学・学術', time:35, money:55},{name:'オンライン学習', time:40, money:30},{name:'出版', time:25, money:15}
+      ]},
+      { id:'en-hlt', name:'医療・ヘルスケア', time:15, money:12, micro:[
+        {name:'病院・クリニック', time:40, money:60},{name:'製薬', time:20, money:30},{name:'ウェルネス', time:40, money:10}
+      ]},
+    ]
+  },
+  { id:'zh', name:'中国語圏', pop:'約15億人', time:18, money:18,
+    middle:[
+      { id:'zh-mfg', name:'製造業', time:20, money:35, micro:[
+        {name:'電子機器', time:30, money:42},{name:'自動車', time:25, money:30},{name:'繊維・消費財', time:45, money:28}
+      ]},
+      { id:'zh-tech', name:'テック・プラットフォーム', time:35, money:28, micro:[
+        {name:'EC（タオバオ等）', time:40, money:45},{name:'SNS（WeChat等）', time:38, money:35},{name:'ゲーム', time:22, money:20}
+      ]},
+      { id:'zh-fin', name:'金融', time:15, money:25, micro:[
+        {name:'国有銀行', time:20, money:55},{name:'モバイル決済', time:45, money:35},{name:'不動産', time:35, money:10}
+      ]},
+      { id:'zh-ene', name:'エネルギー・インフラ', time:10, money:12, micro:[
+        {name:'再生可能エネルギー', time:30, money:50},{name:'電力インフラ', time:40, money:35},{name:'通信', time:30, money:15}
+      ]},
+    ]
+  },
+  { id:'ja', name:'日本語圏', pop:'約1.2億人', time:1.5, money:4,
+    middle:[
+      { id:'ja-mfg', name:'製造・自動車', time:18, money:28, micro:[
+        {name:'自動車（トヨタ等）', time:35, money:55},{name:'電子部品', time:30, money:28},{name:'精密機械', time:35, money:17}
+      ]},
+      { id:'ja-med', name:'メディア・コンテンツ', time:25, money:12, micro:[
+        {name:'アニメ・漫画', time:32, money:30},{name:'テレビ・動画', time:38, money:35},{name:'ゲーム', time:20, money:25},{name:'音楽', time:10, money:10}
+      ]},
+      { id:'ja-fin', name:'金融・不動産', time:12, money:22, micro:[
+        {name:'銀行・証券', time:25, money:50},{name:'不動産', time:30, money:35},{name:'保険', time:45, money:15}
+      ]},
+      { id:'ja-ret', name:'小売・EC', time:20, money:18, micro:[
+        {name:'コンビニ・スーパー', time:42, money:38},{name:'EC（楽天・Amazon）', time:35, money:42},{name:'百貨店', time:23, money:20}
+      ]},
+      { id:'ja-tech', name:'テック・SaaS', time:15, money:10, micro:[
+        {name:'SaaS・クラウド', time:30, money:45},{name:'ゲーム', time:40, money:35},{name:'AI関連', time:30, money:20}
+      ]},
+      { id:'ja-hlth', name:'医療・介護', time:10, money:10, micro:[
+        {name:'病院・クリニック', time:35, money:60},{name:'介護・福祉', time:45, money:30},{name:'製薬', time:20, money:10}
+      ]},
+    ]
+  },
+  { id:'es', name:'スペイン語圏', pop:'約5億人', time:8, money:7,
+    middle:[
+      { id:'es-agr', name:'農業・食品', time:25, money:30, micro:[
+        {name:'農産物輸出', time:40, money:55},{name:'食品加工', time:35, money:30},{name:'外食・観光食', time:25, money:15}
+      ]},
+      { id:'es-ene', name:'エネルギー', time:20, money:28, micro:[
+        {name:'石油・ガス', time:30, money:55},{name:'再生可能', time:40, money:35},{name:'電力流通', time:30, money:10}
+      ]},
+      { id:'es-med', name:'メディア・エンタメ', time:30, money:18, micro:[
+        {name:'音楽（ラテン）', time:38, money:38},{name:'テレビ・映画', time:42, money:42},{name:'スポーツ', time:20, money:20}
+      ]},
+    ]
+  },
+  { id:'oth', name:'その他の言語圏', pop:'約40億人', time:47, money:16,
+    middle:[
+      { id:'oth-agr', name:'農業・資源', time:35, money:30, micro:[
+        {name:'農産物', time:45, money:40},{name:'鉱物資源', time:25, money:45},{name:'漁業', time:30, money:15}
+      ]},
+      { id:'oth-mfg', name:'製造・輸出', time:30, money:35, micro:[
+        {name:'繊維・縫製', time:40, money:30},{name:'電子組立', time:35, money:50},{name:'消費財', time:25, money:20}
+      ]},
+      { id:'oth-ser', name:'サービス・観光', time:35, money:35, micro:[
+        {name:'観光・ホスピタリティ', time:40, money:45},{name:'小売', time:35, money:35},{name:'通信', time:25, money:20}
+      ]},
+    ]
+  },
+];
+
+// ===== STATE =====
+let currentMacro = null;
+let currentMiddle = null;
+
+// ===== PATTERN A =====
+function renderMacroA() {
+  const list = document.getElementById('macro-list');
+  list.innerHTML = macroNodes.map(n => `
+    <div class="node-item" onclick="drillMid('${n.id}')">
+      <div class="node-name">${n.name}<br><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);font-weight:300;">${n.pop}</span></div>
+      <div class="node-bars">
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill time" style="width:${n.time}%"></div></div>
+          <div class="bar-val">${n.time}%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill money" style="width:${n.money}%"></div></div>
+          <div class="bar-val">${n.money}%</div>
+        </div>
+      </div>
+      <div class="node-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+function drillMid(macroId) {
+  currentMacro = macroNodes.find(n => n.id === macroId);
+  document.getElementById('mid-breadcrumb').textContent = currentMacro.name;
+  document.getElementById('mid-title').textContent = currentMacro.name + '　業界・市場';
+  document.getElementById('mid-meta').textContent = `人口${currentMacro.pop}　時間シェア ${currentMacro.time}%　GDPシェア ${currentMacro.money}%`;
+
+  const list = document.getElementById('middle-list');
+  list.innerHTML = currentMacro.middle.map(m => `
+    <div class="node-item" onclick="drillMicro('${m.id}')">
+      <div class="node-name">${m.name}</div>
+      <div class="node-bars">
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill time" style="width:${m.time}%"></div></div>
+          <div class="bar-val">${m.time}%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill money" style="width:${m.money}%"></div></div>
+          <div class="bar-val">${m.money}%</div>
+        </div>
+      </div>
+      <div class="node-arrow">›</div>
+    </div>
+  `).join('');
+
+  showScreen('middle');
+}
+
+function drillMicro(midId) {
+  currentMiddle = currentMacro.middle.find(m => m.id === midId);
+  document.getElementById('micro-bc-mid').textContent = currentMacro.name;
+  document.getElementById('micro-bc-cur').textContent = currentMiddle.name;
+  document.getElementById('micro-title').textContent = currentMiddle.name;
+  document.getElementById('micro-meta').textContent = `時間シェア ${currentMiddle.time}%　お金シェア ${currentMiddle.money}%`;
+
+  const list = document.getElementById('micro-list');
+  list.innerHTML = currentMiddle.micro.map(mi => `
+    <div class="node-item" style="cursor:default;">
+      <div class="node-name">${mi.name}</div>
+      <div class="node-bars">
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill time" style="width:${mi.time}%"></div></div>
+          <div class="bar-val">${mi.time}%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track"><div class="bar-fill money" style="width:${mi.money}%"></div></div>
+          <div class="bar-val">${mi.money}%</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('micro');
+}
+
+function showScreen(name) {
+  ['macro','middle','micro'].forEach(s => {
+    document.getElementById('screen-'+s).classList.toggle('visible', s === name);
+  });
+}
+
+function goBack(target) {
+  showScreen(target);
+}
+
+// ===== PATTERN B =====
+function renderMacroB() {
+  const list = document.getElementById('macro-b-list');
+  list.innerHTML = macroNodes.map(n => `
+    <div class="macro-node" id="b-${n.id}">
+      <div class="macro-header" onclick="toggleB('${n.id}')">
+        <div class="macro-name">${n.name} <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);font-weight:300;">${n.pop}</span></div>
+        <div class="node-bars" style="width:90px;">
+          <div class="bar-row">
+            <div class="bar-track"><div class="bar-fill time" style="width:${n.time}%"></div></div>
+            <div class="bar-val">${n.time}%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-track"><div class="bar-fill money" style="width:${n.money}%"></div></div>
+            <div class="bar-val">${n.money}%</div>
+          </div>
+        </div>
+        <div class="macro-toggle">▶</div>
+      </div>
+      <div class="macro-expand" id="bx-${n.id}">
+        <div class="middle-nodes">
+          ${n.middle.map(m => `
+            <div class="middle-node">
+              <div class="middle-node-name">${m.name}</div>
+              <div class="middle-node-bars">
+                <div class="bar-row">
+                  <div class="bar-track"><div class="bar-fill time" style="width:${m.time}%"></div></div>
+                  <div class="bar-val" style="font-size:9px;">${m.time}%</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-track"><div class="bar-fill money" style="width:${m.money}%"></div></div>
+                  <div class="bar-val" style="font-size:9px;">${m.money}%</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleB(id) {
+  const node = document.getElementById('b-'+id);
+  const isOpen = node.classList.contains('open');
+  document.querySelectorAll('.macro-node').forEach(n => n.classList.remove('open'));
+  if (!isOpen) node.classList.add('open');
+}
+
+// ===== MODE =====
+function setMode(m) {
+  document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&m==='a')||(i===1&&m==='b')));
+  document.getElementById('pa').classList.toggle('visible', m==='a');
+  document.getElementById('pb').classList.toggle('visible', m==='b');
+}
+
+// ===== INIT =====
+renderMacroA();
+renderMacroB();
+</script>
